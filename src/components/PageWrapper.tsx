@@ -1,5 +1,6 @@
 
 import React from 'react';
+import Footer from './Footer';
 
 interface PageWrapperProps {
   children: React.ReactNode;
@@ -7,10 +8,11 @@ interface PageWrapperProps {
 
 const PageWrapper: React.FC<PageWrapperProps> = ({ children }) => {
   return (
-    <div className="min-h-screen relative bg-cover bg-center bg-no-repeat bg-fixed" style={{ backgroundImage: "url('/lovable-uploads/c588d81a-2dae-41f9-bc1a-bf1d02de2852.png')" }}>
-      <div className="min-h-screen relative backdrop-blur-sm bg-black/30">
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-grow">
         {children}
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 };
