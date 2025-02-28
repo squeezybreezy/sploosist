@@ -42,7 +42,28 @@
   color: #888;
 }
 
-/* Background mascot image */
+/* Full-screen background image */
+body {
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/lovable-uploads/9c87b5da-81ea-48bd-803d-2457da7c8930.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.1; /* Subtle background so content remains readable */
+}
+
+/* Mascot in corner */
 #root::after {
   content: '';
   position: fixed;
