@@ -2,10 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// Access environment variables with proper error handling
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Check your .env file.');
+}
+
+export const supabase = createClient<Database>(
+  supabaseUrl as string, 
+  supabaseAnonKey as string
+);
 
 export const getCurrentUser = async () => {
   const { data: { session } } = await supabase.auth.getSession();
