@@ -81,19 +81,19 @@ const AddBookmark = () => {
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="max-w-md w-full p-8 space-y-6 rounded-lg border border-border bg-card shadow-lg">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">Quick Add Bookmark</h1>
+            <h1 className="text-2xl font-bold text-white">Quick Add Bookmark</h1>
             
             {status === 'loading' && (
               <div className="mt-8 flex flex-col items-center">
                 <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-                <p className="text-muted-foreground">Loading...</p>
+                <p className="text-white">Loading...</p>
               </div>
             )}
             
             {status === 'saving' && (
               <div className="mt-8 flex flex-col items-center">
                 <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
-                <p className="text-muted-foreground">Saving bookmark...</p>
+                <p className="text-white">Saving bookmark...</p>
               </div>
             )}
             
@@ -102,8 +102,8 @@ const AddBookmark = () => {
                 <div className="rounded-full bg-green-500/20 p-3 mb-4">
                   <BookmarkCheck className="h-10 w-10 text-green-500" />
                 </div>
-                <p className="font-medium">Bookmark added successfully!</p>
-                <p className="mt-2 text-muted-foreground">Redirecting to your collection...</p>
+                <p className="font-medium text-white">Bookmark added successfully!</p>
+                <p className="mt-2 text-gray-300">Redirecting to your collection...</p>
               </div>
             )}
             
@@ -113,7 +113,7 @@ const AddBookmark = () => {
                   <div className="h-10 w-10 text-destructive flex items-center justify-center">❌</div>
                 </div>
                 <p className="font-medium text-destructive">Error adding bookmark</p>
-                <p className="text-muted-foreground">{errorMessage}</p>
+                <p className="text-gray-300">{errorMessage}</p>
                 <button
                   onClick={() => navigate('/')}
                   className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md"
