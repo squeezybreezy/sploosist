@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Bookmark } from '@/lib/types';
 import { formatRelativeTime } from '@/lib/bookmarkUtils';
 import VideoThumbnail from './VideoThumbnail';
-import { AlertTriangle, Link2Off, ExternalLink, MoreHorizontal, Image, FileText, PaintBucket } from 'lucide-react';
+import { AlertTriangle, Link2Off, ExternalLink, MoreHorizontal, Image, FileText } from 'lucide-react';
 import { updateSplatCount } from '@/lib/bookmarkService';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +39,6 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
   const { toast } = useToast();
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent click when clicking on buttons inside the card
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
@@ -73,7 +71,6 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
       className={`bookmark-card group animate-scale-up cursor-pointer ${!isAlive ? 'opacity-70' : ''}`}
       onClick={handleCardClick}
     >
-      {/* Thumbnail Section */}
       <div className="relative">
         {type === 'video' ? (
           <VideoThumbnail 
@@ -141,9 +138,8 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
           </div>
         )}
 
-        {/* Splat count badge if > 0 */}
         {splatCount > 0 && (
-          <div className="absolute top-2 left-2 flex items-center bg-white/90 text-black rounded-full p-1 shadow-md">
+          <div className="absolute top-2 left-2 flex items-center bg-primary/90 text-white rounded-full p-1 shadow-md">
             <img 
               src="/lovable-uploads/6b7e5704-37c2-4729-8050-731e5bc6d1a1.png" 
               alt="Splat" 
@@ -154,24 +150,20 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
         )}
       </div>
 
-      {/* Content Section */}
       <div className="p-4">
-        {/* Status badges */}
-        <div className="mb-2 flex items-center gap-2">
-          {!isAlive && (
-            <div className="tag-badge bg-destructive/10 border-destructive/20 text-destructive flex items-center gap-1">
-              <Link2Off className="h-3 w-3" />
-              <span>Broken link</span>
-            </div>
-          )}
-          
-          {contentChanged && (
-            <div className="tag-badge bg-amber-500/10 border-amber-500/20 text-amber-600 flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
-              <span>Content changed</span>
-            </div>
-          )}
-        </div>
+        {!isAlive && (
+          <div className="tag-badge bg-destructive/10 border-destructive/20 text-destructive flex items-center gap-1">
+            <Link2Off className="h-3 w-3" />
+            <span>Broken link</span>
+          </div>
+        )}
+        
+        {contentChanged && (
+          <div className="tag-badge bg-amber-500/10 border-amber-500/20 text-amber-600 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            <span>Content changed</span>
+          </div>
+        )}
 
         <h3 className="font-medium text-base mb-1 line-clamp-1 group-hover:text-primary transition-colors">
           {title}
@@ -183,7 +175,6 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
           </p>
         )}
 
-        {/* Tags */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-3">
             {tags.slice(0, 3).map((tag) => (
@@ -201,19 +192,21 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
           </div>
         )}
 
-        {/* Footer */}
         <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
           <span>{formatRelativeTime(dateAdded)}</span>
           
           <div className="flex gap-1">
-            {/* Splat button */}
             <button 
-              className="p-1 rounded-full hover:bg-white/20 transition-colors bg-primary/10"
+              className="p-1 rounded-full hover:bg-primary/20 transition-colors bg-primary/10"
               onClick={handleSplat}
               aria-label="Splat this bookmark"
               title="Splat!"
             >
-              <PaintBucket className="h-4 w-4 text-primary" />
+              <img
+                src="/lovable-uploads/6b7e5704-37c2-4729-8050-731e5bc6d1a1.png"
+                alt="Splat"
+                className="h-4 w-4"
+              />
             </button>
             
             <button 
