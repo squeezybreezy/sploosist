@@ -4,7 +4,7 @@ import { Github, Twitter, Mail } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-[#1A1F2C] text-white py-8 border-t border-white/10">
+    <footer className="bg-[#1A1F2C] text-white py-8 border-t border-white/10 relative">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
@@ -48,6 +48,15 @@ const Footer = () => {
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
           <p>&copy; {new Date().getFullYear()} Bookmark Manager. All rights reserved.</p>
         </div>
+      </div>
+      
+      {/* Person image in bottom right corner */}
+      <div className="absolute bottom-0 right-0 w-32 md:w-48 lg:w-64 xl:w-72 h-auto">
+        <img 
+          src="/lovable-uploads/fa9fefb4-d407-4e5a-afe2-0d496f5fb688.png" 
+          alt="Assistant" 
+          className="object-contain"
+        />
       </div>
     </footer>
   );
