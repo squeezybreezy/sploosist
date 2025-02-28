@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import AddBookmark from "./pages/AddBookmark";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,12 @@ const App = () => (
                 <ProtectedRoute>
                   <Index />
                 </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/add" 
+              element={
+                <AddBookmark />
               } 
             />
             <Route path="/signin" element={<SignIn />} />

@@ -160,6 +160,70 @@ export const saveBookmark = async (bookmark: Bookmark): Promise<Bookmark> => {
   return bookmark;
 };
 
+// Import multiple bookmarks at once
+export const importBookmarks = async (
+  bookmarks: Bookmark[],
+  newTags: Tag[],
+  newCategories: Category[]
+): Promise<{ imported: number; failed: number }> => {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("User not authenticated");
+  
+  let imported = 0;
+  let failed = 0;
+  
+  // First, save any new categories
+  if (newCategories.length > 0) {
+    const categoriesToInsert = newCategories.map(category => ({
+      id: category.id,
+      user_id: user.id,
+      name: category.name,
+      icon: category.icon || null
+    }));
+    
+    const { error: categoryError } = await supabase
+      .from('categories')
+      .upsert(categoriesToInsert);
+    
+    if (categoryError) {
+      console.error('Error saving categories:', categoryError);
+      throw categoryError;
+    }
+  }
+  
+  // Then, save any new tags
+  if (newTags.length > 0) {
+    const tagsToInsert = newTags.map(tag => ({
+      id: tag.id,
+      user_id: user.id,
+      name: tag.name,
+      color: tag.color || null
+    }));
+    
+    const { error: tagError } = await supabase
+      .from('tags')
+      .upsert(tagsToInsert);
+    
+    if (tagError) {
+      console.error('Error saving tags:', tagError);
+      throw tagError;
+    }
+  }
+  
+  // Now save bookmarks one by one (to better handle errors)
+  for (const bookmark of bookmarks) {
+    try {
+      await saveBookmark(bookmark);
+      imported++;
+    } catch (error) {
+      console.error(`Error importing bookmark ${bookmark.url}:`, error);
+      failed++;
+    }
+  }
+  
+  return { imported, failed };
+};
+
 // Delete a bookmark
 export const deleteBookmark = async (bookmarkId: string): Promise<void> => {
   const user = await getCurrentUser();

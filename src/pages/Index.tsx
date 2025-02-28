@@ -7,13 +7,16 @@ import {
   ListFilter, 
   LayoutGrid, 
   Trash2,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Upload,
+  Download
 } from 'lucide-react';
 import BookmarkCard from '@/components/BookmarkCard';
 import BookmarkFilters from '@/components/BookmarkFilters';
 import EmptyState from '@/components/EmptyState';
 import AddBookmarkModal from '@/components/AddBookmarkModal';
 import Navbar from '@/components/Navbar';
+import BookmarkImportModal from '@/components/BookmarkImportModal';
 import { Bookmark, BookmarkFilters as BookmarkFiltersType, Tag, Category } from '@/lib/types';
 import { filterBookmarks } from '@/lib/bookmarkUtils';
 import { 
@@ -23,11 +26,13 @@ import {
   fetchTags, 
   fetchCategories 
 } from '@/lib/bookmarkService';
+import { generateBookmarklet } from '@/lib/bookmarkImporter';
 
 const Index = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [filters, setFilters] = useState<BookmarkFiltersType>({
     query: '',
     tags: [],
@@ -149,6 +154,23 @@ const Index = () => {
     }
   };
 
+  // Handle import complete
+  const handleImportComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+    queryClient.invalidateQueries({ queryKey: ['tags'] });
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+  };
+
+  // Handle add bookmarklet to browser
+  const handleAddBookmarklet = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    toast({
+      title: "Drag to your bookmarks bar",
+      description: "Drag the button to your browser's bookmarks bar to enable Quick Add for any page.",
+    });
+  };
+
   // Handle API errors
   useEffect(() => {
     if (bookmarksError) {
@@ -162,6 +184,10 @@ const Index = () => {
   }, [bookmarksError, toast]);
 
   const isLoading = isLoadingBookmarks || isLoadingTags || isLoadingCategories;
+
+  // Generate bookmarklet
+  const appUrl = window.location.origin;
+  const bookmarkletCode = generateBookmarklet(appUrl);
 
   return (
     <div className="min-h-screen bg-background">
@@ -181,6 +207,27 @@ const Index = () => {
           </div>
           
           <div className="flex gap-2">
+            {/* Quick Add Button */}
+            <a
+              href={bookmarkletCode}
+              onClick={handleAddBookmarklet}
+              draggable="true"
+              className="hidden sm:flex px-4 py-2 border border-primary/30 text-primary rounded-md items-center gap-2 hover:bg-primary/10 transition-colors"
+              title="Drag to your bookmarks bar to enable quick adding from any page"
+            >
+              <Download className="h-4 w-4" />
+              <span>Quick Add Button</span>
+            </a>
+            
+            {/* Import Button */}
+            <button
+              className="hidden sm:flex px-4 py-2 border border-primary/30 text-primary rounded-md items-center gap-2 hover:bg-primary/10 transition-colors"
+              onClick={() => setIsImportModalOpen(true)}
+            >
+              <Upload className="h-4 w-4" />
+              <span>Import</span>
+            </button>
+            
             <button
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md flex items-center gap-2 hover:bg-primary/90 transition-colors md:hidden"
               onClick={() => {
@@ -223,6 +270,26 @@ const Index = () => {
             <p className="text-sm text-muted-foreground">
               {filteredBookmarks.length} bookmark{filteredBookmarks.length !== 1 ? 's' : ''} found
             </p>
+            
+            {/* Mobile Import Button */}
+            <div className="flex gap-2 sm:hidden">
+              <button
+                className="p-2 border rounded-md hover:bg-secondary transition-colors"
+                onClick={() => setIsImportModalOpen(true)}
+                aria-label="Import bookmarks"
+              >
+                <Upload className="h-4 w-4" />
+              </button>
+              <a
+                href={bookmarkletCode}
+                onClick={handleAddBookmarklet}
+                draggable="true"
+                className="p-2 border rounded-md hover:bg-secondary transition-colors"
+                aria-label="Quick add bookmark button"
+              >
+                <Download className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </div>
         
@@ -276,6 +343,15 @@ const Index = () => {
         editBookmark={editBookmark}
         availableTags={allTags}
         availableCategories={allCategories}
+      />
+      
+      {/* Import Bookmarks Modal */}
+      <BookmarkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        availableTags={allTags}
+        availableCategories={allCategories}
+        onImportComplete={handleImportComplete}
       />
       
       {/* Delete Confirmation Modal */}
