@@ -1,147 +1,124 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import PageWrapper from '@/components/PageWrapper';
 
 const SignUp = () => {
-  const navigate = useNavigate();
-  const { signUp } = useAuth();
-  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
-
-  const validatePassword = () => {
-    if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setPasswordError('Passwords do not match');
-      return false;
-    }
-    setPasswordError('');
-    return true;
-  };
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validatePassword()) {
-      return;
-    }
-    
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      await signUp(email, password);
-      toast({
-        title: 'Account created',
-        description: 'Your account has been created and you are now signed in.',
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
       });
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing up:', error);
+
+      if (error) throw error;
+      
       toast({
-        title: 'Sign up failed',
-        description: error instanceof Error ? error.message : 'Please try again with different credentials.',
-        variant: 'destructive',
+        title: "Account created!",
+        description: "Check your email to confirm your account.",
+      });
+      
+      navigate('/signin');
+    } catch (error: any) {
+      toast({
+        title: "Sign up failed",
+        description: error.message || "Please check your information and try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-xl border border-border/30">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Create Account</h1>
-          <p className="mt-2 text-muted-foreground">Join SploogeAssist today</p>
-        </div>
-        
-        <form className="space-y-6" onSubmit={handleSignUp}>
-          <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+    <PageWrapper>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold tracking-tight">Create Account</h1>
+            <p className="mt-2 text-muted-foreground">
+              Sign up for a new bookmark manager account
+            </p>
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              className={`w-full px-3 py-2 bg-secondary/50 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${passwordError && password ? 'border-destructive' : 'border-border'}`}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={validatePassword}
-            />
+          <div className="glass-panel p-6">
+            <form className="space-y-4" onSubmit={handleSignUp}>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 6 characters
+                </p>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-70"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />
+                    <span>Creating account...</span>
+                  </div>
+                ) : (
+                  "Sign Up"
+                )}
+              </button>
+            </form>
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              required
-              className={`w-full px-3 py-2 bg-secondary/50 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${passwordError && confirmPassword ? 'border-destructive' : 'border-border'}`}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              onBlur={validatePassword}
-            />
-            {passwordError && (
-              <p className="text-destructive text-sm">{passwordError}</p>
-            )}
+          <div className="text-center text-sm">
+            <p className="text-muted-foreground">
+              Already have an account?{' '}
+              <Link
+                to="/signin"
+                className="text-primary hover:underline"
+              >
+                Sign in
+              </Link>
+            </p>
           </div>
-          
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center justify-center"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                Creating Account...
-              </>
-            ) : (
-              'Sign Up'
-            )}
-          </button>
-        </form>
-        
-        <div className="text-center mt-4">
-          <p className="text-sm text-muted-foreground">
-            Already have an account?{' '}
-            <button
-              type="button"
-              className="text-primary hover:underline"
-              onClick={() => navigate('/signin')}
-            >
-              Sign In
-            </button>
-          </p>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 };
 

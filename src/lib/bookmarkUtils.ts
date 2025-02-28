@@ -39,6 +39,32 @@ export const formatRelativeTime = (date: Date): string => {
   return `${diffInYears} year${diffInYears !== 1 ? 's' : ''} ago`;
 };
 
+// Check if URL is a video
+export const isVideoUrl = (url: string): boolean => {
+  const videoRegex = /\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)(\?.*)?$/i;
+  
+  return (
+    videoRegex.test(url) ||
+    url.includes('youtube.com') ||
+    url.includes('youtu.be') ||
+    url.includes('vimeo.com')
+  );
+};
+
+// Extract YouTube video ID from URL
+export const getYouTubeVideoId = (url: string): string | null => {
+  // Handle standard YouTube URLs
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+// Generate YouTube thumbnail URL from video ID
+export const generateYouTubeThumbnail = (videoId: string, quality: 'default' | 'hq' | 'mq' | 'sd' | 'maxres' = 'hq'): string => {
+  return `https://img.youtube.com/vi/${videoId}/${quality}default.jpg`;
+};
+
 // Determine bookmark type from URL
 export const getBookmarkTypeFromUrl = (url: string): BookmarkType => {
   const imageRegex = /\.(jpeg|jpg|gif|png|svg|webp)(\?.*)?$/i;

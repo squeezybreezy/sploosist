@@ -1,118 +1,128 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import PageWrapper from '@/components/PageWrapper';
 
 const SignIn = () => {
-  const navigate = useNavigate();
-  const { signIn } = useAuth();
-  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      await signIn(email, password);
-      toast({
-        title: 'Successfully signed in',
-        description: 'Welcome back to SploogeAssist!',
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing in:', error);
+
+      if (error) throw error;
+      
       toast({
-        title: 'Sign in failed',
-        description: error instanceof Error ? error.message : 'Please check your credentials and try again.',
-        variant: 'destructive',
+        title: "Welcome back!",
+        description: "You've successfully signed in.",
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: "Sign in failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <div className="w-full bg-card shadow-sm p-4">
-        <img 
-          src="/lovable-uploads/9c87b5da-81ea-48bd-803d-2457da7c8930.png" 
-          alt="SploogeAssist Banner" 
-          className="w-full h-auto object-contain"
-        />
-      </div>
-      
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-xl border border-border/30">
+    <PageWrapper>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold">Sign In</h1>
-            <p className="mt-2 text-muted-foreground">Welcome back to SploogeAssist</p>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome Back</h1>
+            <p className="mt-2 text-muted-foreground">
+              Sign in to your bookmark manager account
+            </p>
           </div>
           
-          <form className="space-y-6" onSubmit={handleSignIn}>
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            
-            <button
-              type="submit"
-              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center justify-center"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                  Signing In...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </form>
-          
-          <div className="text-center mt-4">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
+          <div className="glass-panel p-6">
+            <form className="space-y-4" onSubmit={handleSignIn}>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </label>
+                  <Link
+                    to="#"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              
               <button
-                type="button"
-                className="text-primary hover:underline"
-                onClick={() => navigate('/signup')}
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-70"
               >
-                Sign Up
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />
+                    <span>Signing in...</span>
+                  </div>
+                ) : (
+                  "Sign In"
+                )}
               </button>
+            </form>
+          </div>
+          
+          <div className="text-center text-sm">
+            <p className="text-muted-foreground">
+              Don't have an account?{' '}
+              <Link
+                to="/signup"
+                className="text-primary hover:underline"
+              >
+                Sign up
+              </Link>
             </p>
           </div>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 };
 

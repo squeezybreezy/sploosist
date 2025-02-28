@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,29 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Background mascot image */
+body::after {
+  content: '';
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  height: 350px;
+  background-image: url('/lovable-uploads/cd4dcace-249e-4c7e-87a4-7e7ede8e0c5e.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Ensure content doesn't overlap the mascot on mobile */
+@media (max-width: 768px) {
+  body::after {
+    width: 200px;
+    height: 233px;
+    opacity: 0.8;
+  }
 }
