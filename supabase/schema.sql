@@ -18,6 +18,7 @@ CREATE TABLE bookmarks (
     content_changed BOOLEAN DEFAULT FALSE,
     favicon TEXT,
     category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+    splat_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 

@@ -29,6 +29,7 @@ export interface Bookmark {
   tags: Tag[];
   category?: Category;
   favicon?: string;
+  splatCount?: number;
 }
 
 export type SortOption = 
@@ -37,7 +38,9 @@ export type SortOption =
   | 'lastVisited-desc' 
   | 'lastVisited-asc' 
   | 'title-asc' 
-  | 'title-desc';
+  | 'title-desc'
+  | 'splatCount-desc'
+  | 'splatCount-asc';
 
 export interface BookmarkFilters {
   query: string;

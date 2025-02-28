@@ -27,6 +27,7 @@ export interface Database {
           content_changed: boolean | null
           favicon: string | null
           category_id: string | null
+          splat_count: number | null
         }
         Insert: {
           id: string
@@ -44,6 +45,7 @@ export interface Database {
           content_changed?: boolean | null
           favicon?: string | null
           category_id?: string | null
+          splat_count?: number | null
         }
         Update: {
           id?: string
@@ -61,6 +63,7 @@ export interface Database {
           content_changed?: boolean | null
           favicon?: string | null
           category_id?: string | null
+          splat_count?: number | null
         }
       }
       bookmark_tags: {

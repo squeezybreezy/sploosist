@@ -61,6 +61,7 @@ const mapBookmarkFromDB = async (dbBookmark: any): Promise<Bookmark> => {
     tags,
     category,
     favicon: dbBookmark.favicon || undefined,
+    splatCount: dbBookmark.splat_count || 0,
   };
 };
 
@@ -82,6 +83,7 @@ const prepareBookmarkForDB = (bookmark: Bookmark, userId: string) => {
     content_changed: bookmark.contentChanged || null,
     favicon: bookmark.favicon || null,
     category_id: bookmark.category?.id || null,
+    splat_count: bookmark.splatCount || 0,
   };
 };
 
@@ -158,6 +160,42 @@ export const saveBookmark = async (bookmark: Bookmark): Promise<Bookmark> => {
   }
   
   return bookmark;
+};
+
+// Update a bookmark's splat count
+export const updateSplatCount = async (bookmarkId: string, increment: boolean = true): Promise<number> => {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("User not authenticated");
+
+  // Get the current bookmark to get the current splat count
+  const { data: bookmarkData, error: fetchError } = await supabase
+    .from('bookmarks')
+    .select('splat_count')
+    .eq('id', bookmarkId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching bookmark for splat update:', fetchError);
+    throw fetchError;
+  }
+
+  const currentSplatCount = bookmarkData?.splat_count || 0;
+  const newSplatCount = increment ? currentSplatCount + 1 : Math.max(0, currentSplatCount - 1);
+
+  // Update the splat count
+  const { error: updateError } = await supabase
+    .from('bookmarks')
+    .update({ splat_count: newSplatCount })
+    .eq('id', bookmarkId)
+    .eq('user_id', user.id);
+
+  if (updateError) {
+    console.error('Error updating splat count:', updateError);
+    throw updateError;
+  }
+
+  return newSplatCount;
 };
 
 // Import multiple bookmarks at once

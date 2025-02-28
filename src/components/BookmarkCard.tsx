@@ -3,7 +3,10 @@ import React from 'react';
 import { Bookmark } from '@/lib/types';
 import { formatRelativeTime } from '@/lib/bookmarkUtils';
 import VideoThumbnail from './VideoThumbnail';
-import { AlertTriangle, Link2Off, ExternalLink, MoreHorizontal, Image, FileText } from 'lucide-react';
+import { AlertTriangle, Link2Off, ExternalLink, MoreHorizontal, Image, FileText, PaintBucket } from 'lucide-react';
+import { updateSplatCount } from '@/lib/bookmarkService';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface BookmarkCardProps {
   bookmark: Bookmark;
@@ -29,8 +32,12 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
     dateAdded, 
     isAlive, 
     contentChanged, 
-    tags 
+    tags,
+    splatCount = 0
   } = bookmark;
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Prevent click when clicking on buttons inside the card
@@ -40,77 +47,112 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
     onClick(bookmark);
   };
 
+  const handleSplat = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await updateSplatCount(id);
+      queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
+      
+      toast({
+        title: "Splat!",
+        description: "You've added a splat to this bookmark!",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error updating splat count:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update splat count",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div 
       className={`bookmark-card group animate-scale-up cursor-pointer ${!isAlive ? 'opacity-70' : ''}`}
       onClick={handleCardClick}
     >
       {/* Thumbnail Section */}
-      {type === 'video' ? (
-        <VideoThumbnail 
-          url={url} 
-          thumbnailUrl={thumbnailUrl} 
-          videoThumbnailTimestamp={videoThumbnailTimestamp} 
-        />
-      ) : type === 'image' ? (
-        <div className="bookmark-thumbnail">
-          {thumbnailUrl ? (
-            <img 
-              src={thumbnailUrl} 
-              alt={title} 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
-              <Image className="h-10 w-10 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Image preview</p>
-            </div>
-          )}
-        </div>
-      ) : type === 'document' ? (
-        <div className="bookmark-thumbnail">
-          {thumbnailUrl ? (
-            <img 
-              src={thumbnailUrl} 
-              alt={title} 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
-              <FileText className="h-10 w-10 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">Document preview</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bookmark-thumbnail">
-          {thumbnailUrl ? (
-            <img 
-              src={thumbnailUrl} 
-              alt={title} 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <div className="w-3/4 h-1/2 bg-background/50 rounded shadow-sm flex items-center justify-center">
-                {bookmark.favicon && (
-                  <img 
-                    src={bookmark.favicon} 
-                    alt="Favicon" 
-                    className="w-10 h-10 mr-3"
-                  />
-                )}
-                <span className="text-sm font-medium truncate">
-                  {url.replace(/^https?:\/\//, '').split('/')[0]}
-                </span>
+      <div className="relative">
+        {type === 'video' ? (
+          <VideoThumbnail 
+            url={url} 
+            thumbnailUrl={thumbnailUrl} 
+            videoThumbnailTimestamp={videoThumbnailTimestamp} 
+          />
+        ) : type === 'image' ? (
+          <div className="bookmark-thumbnail">
+            {thumbnailUrl ? (
+              <img 
+                src={thumbnailUrl} 
+                alt={title} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+                <Image className="h-10 w-10 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Image preview</p>
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        ) : type === 'document' ? (
+          <div className="bookmark-thumbnail">
+            {thumbnailUrl ? (
+              <img 
+                src={thumbnailUrl} 
+                alt={title} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+                <FileText className="h-10 w-10 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Document preview</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bookmark-thumbnail">
+            {thumbnailUrl ? (
+              <img 
+                src={thumbnailUrl} 
+                alt={title} 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <div className="w-3/4 h-1/2 bg-background/50 rounded shadow-sm flex items-center justify-center">
+                  {bookmark.favicon && (
+                    <img 
+                      src={bookmark.favicon} 
+                      alt="Favicon" 
+                      className="w-10 h-10 mr-3"
+                    />
+                  )}
+                  <span className="text-sm font-medium truncate">
+                    {url.replace(/^https?:\/\//, '').split('/')[0]}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Splat count badge if > 0 */}
+        {splatCount > 0 && (
+          <div className="absolute top-2 left-2 flex items-center bg-white/90 text-black rounded-full p-1 shadow-md">
+            <img 
+              src="/lovable-uploads/6b7e5704-37c2-4729-8050-731e5bc6d1a1.png" 
+              alt="Splat" 
+              className="w-5 h-5 mr-1"
+            />
+            <span className="text-xs font-bold">{splatCount}</span>
+          </div>
+        )}
+      </div>
 
       {/* Content Section */}
       <div className="p-4">
@@ -164,6 +206,16 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
           <span>{formatRelativeTime(dateAdded)}</span>
           
           <div className="flex gap-1">
+            {/* Splat button */}
+            <button 
+              className="p-1 rounded-full hover:bg-white/20 transition-colors bg-primary/10"
+              onClick={handleSplat}
+              aria-label="Splat this bookmark"
+              title="Splat!"
+            >
+              <PaintBucket className="h-4 w-4 text-primary" />
+            </button>
+            
             <button 
               className="p-1 rounded-full hover:bg-secondary transition-colors"
               onClick={(e) => {
