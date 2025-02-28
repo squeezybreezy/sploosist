@@ -36,7 +36,7 @@ const Footer = () => {
       
       {/* Person image in bottom right corner with greeting */}
       <div className="absolute bottom-0 right-0 w-32 md:w-48 lg:w-64 xl:w-72 h-auto">
-        <div className="absolute bottom-16 md:bottom-24 lg:bottom-32 right-16 md:right-24 lg:right-32 text-xl md:text-2xl font-bold text-white">
+        <div className="absolute bottom-16 md:bottom-24 lg:bottom-32 right-36 md:right-56 lg:right-80 text-xl md:text-2xl font-bold text-white">
           Hi Mackie!
         </div>
         <img 
