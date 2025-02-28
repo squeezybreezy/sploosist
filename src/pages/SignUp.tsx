@@ -61,7 +61,7 @@ const SignUp = () => {
       <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-xl border border-border/30">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Create Account</h1>
-          <p className="mt-2 text-muted-foreground">Join Bookmark Buddy today</p>
+          <p className="mt-2 text-muted-foreground">Join SploogeAssist today</p>
         </div>
         
         <form className="space-y-6" onSubmit={handleSignUp}>

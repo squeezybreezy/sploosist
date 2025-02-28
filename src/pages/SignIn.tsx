@@ -21,7 +21,7 @@ const SignIn = () => {
       await signIn(email, password);
       toast({
         title: 'Successfully signed in',
-        description: 'Welcome back to Bookmark Buddy!',
+        description: 'Welcome back to SploogeAssist!',
       });
       navigate('/');
     } catch (error) {
@@ -41,7 +41,7 @@ const SignIn = () => {
       <div className="w-full flex justify-center bg-card shadow-sm p-4">
         <img 
           src="/lovable-uploads/9c87b5da-81ea-48bd-803d-2457da7c8930.png" 
-          alt="Bookmark Banner" 
+          alt="SploogeAssist Banner" 
           className="w-full max-w-lg h-auto object-contain"
         />
       </div>
@@ -50,7 +50,7 @@ const SignIn = () => {
         <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-xl border border-border/30">
           <div className="text-center">
             <h1 className="text-3xl font-bold">Sign In</h1>
-            <p className="mt-2 text-muted-foreground">Welcome back to Bookmark Buddy</p>
+            <p className="mt-2 text-muted-foreground">Welcome back to SploogeAssist</p>
           </div>
           
           <form className="space-y-6" onSubmit={handleSignIn}>

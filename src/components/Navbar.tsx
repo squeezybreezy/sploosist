@@ -43,7 +43,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAddBookmark }) => {
       <div className="w-full flex justify-center">
         <img 
           src="/lovable-uploads/9c87b5da-81ea-48bd-803d-2457da7c8930.png" 
-          alt="Bookmark Banner" 
+          alt="SploogeAssist Banner" 
           className="w-full max-w-4xl h-auto object-contain py-2"
         />
       </div>
@@ -51,7 +51,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAddBookmark }) => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           <Link to="/" className="text-xl font-bold">
-            Bookmark Buddy
+            SploogeAssist
           </Link>
 
           {/* Desktop menu */}
