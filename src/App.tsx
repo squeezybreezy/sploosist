@@ -11,6 +11,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 import AddBookmark from "./pages/AddBookmark";
+import Gallery from "./pages/Gallery";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
                 <AddBookmark />
               } 
             />
+            <Route path="/gallery" element={<Gallery />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="*" element={<NotFound />} />

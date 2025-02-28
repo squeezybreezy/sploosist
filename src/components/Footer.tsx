@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -34,16 +35,21 @@ const Footer = () => {
         </div>
       </div>
       
-      {/* Person image in bottom right corner with greeting */}
+      {/* Person image in bottom right corner with greeting and link to gallery */}
       <div className="absolute bottom-0 right-0 w-32 md:w-48 lg:w-64 xl:w-72 h-auto">
         <div className="absolute bottom-16 md:bottom-24 lg:bottom-32 right-36 md:right-56 lg:right-80 text-xl md:text-2xl font-bold text-white">
           Hi Mackie!
         </div>
-        <img 
-          src="/lovable-uploads/fa9fefb4-d407-4e5a-afe2-0d496f5fb688.png" 
-          alt="Assistant" 
-          className="object-contain"
-        />
+        <Link to="/gallery" className="block relative group">
+          <img 
+            src="/lovable-uploads/fa9fefb4-d407-4e5a-afe2-0d496f5fb688.png" 
+            alt="Assistant" 
+            className="object-contain"
+          />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-purple-600/80 text-white py-2 px-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg backdrop-blur-sm rotate-12 hover:rotate-0 hover:scale-110">
+            Click here!
+          </div>
+        </Link>
       </div>
     </footer>
   );
