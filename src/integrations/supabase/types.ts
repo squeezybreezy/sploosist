@@ -50,6 +50,7 @@ export type Database = {
           is_alive: boolean | null
           last_checked: string | null
           last_visited: string | null
+          splat_count: number | null
           thumbnail_url: string | null
           title: string
           type: string
@@ -67,6 +68,7 @@ export type Database = {
           is_alive?: boolean | null
           last_checked?: string | null
           last_visited?: string | null
+          splat_count?: number | null
           thumbnail_url?: string | null
           title: string
           type: string
@@ -84,6 +86,7 @@ export type Database = {
           is_alive?: boolean | null
           last_checked?: string | null
           last_visited?: string | null
+          splat_count?: number | null
           thumbnail_url?: string | null
           title?: string
           type?: string
