@@ -42,48 +42,12 @@
   color: #888;
 }
 
-/* Full-screen background image */
+/* Full-screen background image - simplified approach */
 body {
-  position: relative;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   background-image: url('/lovable-uploads/33829828-c2fb-43bf-a4a9-63944d30fb71.png');
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 1; /* Full visibility for the new image */
-}
-
-/* Mascot in corner */
-#root::after {
-  content: '';
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  width: 300px;
-  height: 350px;
-  background-image: url('/lovable-uploads/33829828-c2fb-43bf-a4a9-63944d30fb71.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: bottom right;
-  z-index: 10;
-  pointer-events: none;
-}
-
-/* Ensure content doesn't overlap the mascot on mobile */
-@media (max-width: 768px) {
-  #root::after {
-    width: 200px;
-    height: 233px;
-    opacity: 0.8;
-  }
+  background-position: center center;
+  background-attachment: fixed;
+  min-height: 100vh;
 }
