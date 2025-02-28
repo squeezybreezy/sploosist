@@ -37,8 +37,8 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-xl border border-border/30">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Sign In</h1>
           <p className="mt-2 text-muted-foreground">Welcome back to Bookmark Buddy</p>
@@ -53,7 +53,7 @@ const SignIn = () => {
               id="email"
               type="email"
               required
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -67,7 +67,7 @@ const SignIn = () => {
               id="password"
               type="password"
               required
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
