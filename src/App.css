@@ -43,7 +43,7 @@
 }
 
 /* Background mascot image */
-body::after {
+#root::after {
   content: '';
   position: fixed;
   right: 0;
@@ -54,13 +54,13 @@ body::after {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom right;
-  z-index: -1;
+  z-index: 10;
   pointer-events: none;
 }
 
 /* Ensure content doesn't overlap the mascot on mobile */
 @media (max-width: 768px) {
-  body::after {
+  #root::after {
     width: 200px;
     height: 233px;
     opacity: 0.8;

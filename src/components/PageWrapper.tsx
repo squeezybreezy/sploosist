@@ -7,9 +7,8 @@ interface PageWrapperProps {
 
 const PageWrapper: React.FC<PageWrapperProps> = ({ children }) => {
   return (
-    <div className="min-h-screen pb-[350px] md:pb-[350px] relative">
+    <div className="min-h-screen relative">
       {children}
-      <div className="h-[350px] w-full pointer-events-none" />
     </div>
   );
 };
