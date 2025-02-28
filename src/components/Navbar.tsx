@@ -40,11 +40,11 @@ const Navbar: React.FC<NavbarProps> = ({ onAddBookmark }) => {
 
   return (
     <nav className="bg-card shadow-sm">
-      <div className="w-full flex justify-center">
+      <div className="w-full bg-card shadow-sm">
         <img 
           src="/lovable-uploads/9c87b5da-81ea-48bd-803d-2457da7c8930.png" 
           alt="SploogeAssist Banner" 
-          className="w-full max-w-4xl h-auto object-contain py-2"
+          className="w-full h-auto object-contain py-2"
         />
       </div>
       

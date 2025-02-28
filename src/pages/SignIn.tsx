@@ -38,11 +38,11 @@ const SignIn = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <div className="w-full flex justify-center bg-card shadow-sm p-4">
+      <div className="w-full bg-card shadow-sm p-4">
         <img 
           src="/lovable-uploads/9c87b5da-81ea-48bd-803d-2457da7c8930.png" 
           alt="SploogeAssist Banner" 
-          className="w-full max-w-lg h-auto object-contain"
+          className="w-full h-auto object-contain"
         />
       </div>
       
