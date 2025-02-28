@@ -37,69 +37,79 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-xl border border-border/30">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Sign In</h1>
-          <p className="mt-2 text-muted-foreground">Welcome back to Bookmark Buddy</p>
-        </div>
-        
-        <form className="space-y-6" onSubmit={handleSignIn}>
-          <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="w-full flex justify-center bg-card shadow-sm p-4">
+        <img 
+          src="/lovable-uploads/9c87b5da-81ea-48bd-803d-2457da7c8930.png" 
+          alt="Bookmark Banner" 
+          className="w-full max-w-lg h-auto object-contain"
+        />
+      </div>
+      
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-xl border border-border/30">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold">Sign In</h1>
+            <p className="mt-2 text-muted-foreground">Welcome back to Bookmark Buddy</p>
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center justify-center"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                Signing In...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </form>
-        
-        <div className="text-center mt-4">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
+          <form className="space-y-6" onSubmit={handleSignIn}>
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                className="w-full px-3 py-2 bg-secondary/50 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            
             <button
-              type="button"
-              className="text-primary hover:underline"
-              onClick={() => navigate('/signup')}
+              type="submit"
+              className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center justify-center"
+              disabled={isLoading}
             >
-              Sign Up
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                  Signing In...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </button>
-          </p>
+          </form>
+          
+          <div className="text-center mt-4">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <button
+                type="button"
+                className="text-primary hover:underline"
+                onClick={() => navigate('/signup')}
+              >
+                Sign Up
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>
