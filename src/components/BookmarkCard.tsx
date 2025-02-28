@@ -3,7 +3,7 @@ import React from 'react';
 import { Bookmark } from '@/lib/types';
 import { formatRelativeTime } from '@/lib/bookmarkUtils';
 import VideoThumbnail from './VideoThumbnail';
-import { AlertTriangle, LinkOff, ExternalLink, MoreHorizontal, Image, FileText } from 'lucide-react';
+import { AlertTriangle, Link2Off, ExternalLink, MoreHorizontal, Image, FileText } from 'lucide-react';
 
 interface BookmarkCardProps {
   bookmark: Bookmark;
@@ -118,7 +118,7 @@ const BookmarkCard: React.FC<BookmarkCardProps> = ({
         <div className="mb-2 flex items-center gap-2">
           {!isAlive && (
             <div className="tag-badge bg-destructive/10 border-destructive/20 text-destructive flex items-center gap-1">
-              <LinkOff className="h-3 w-3" />
+              <Link2Off className="h-3 w-3" />
               <span>Broken link</span>
             </div>
           )}
