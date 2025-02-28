@@ -41,9 +41,9 @@ const SignUp = () => {
       await signUp(email, password);
       toast({
         title: 'Account created',
-        description: 'Please check your email for a confirmation link.',
+        description: 'Your account has been created and you are now signed in.',
       });
-      navigate('/signin');
+      navigate('/');
     } catch (error) {
       console.error('Error signing up:', error);
       toast({

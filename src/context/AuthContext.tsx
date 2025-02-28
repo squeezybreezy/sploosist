@@ -54,8 +54,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
     },
     signUp: async (email: string, password: string) => {
-      const { error } = await supabase.auth.signUp({ email, password });
+      // Sign up with auto-confirmation (data.session will contain session if successful)
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          // This bypasses the email verification
+          data: {
+            confirmed: true
+          }
+        }
+      });
+      
       if (error) throw error;
+      
+      // Auto-sign in after registration
+      if (data.user && !data.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ 
+          email, 
+          password 
+        });
+        if (signInError) throw signInError;
+      }
     },
     signOut: async () => {
       const { error } = await supabase.auth.signOut();
