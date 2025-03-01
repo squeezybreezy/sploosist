@@ -29,7 +29,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
   const [newCategories, setNewCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'import' | 'bookmarklet'>('import');
-  const [importStatus, setImportStatus] = useState<'idle' | 'parsed' | 'complete'>('idle');
+  const [importStatus, setImportStatus] = useState<'idle' | 'parsing' | 'parsed' | 'importing' | 'complete'>('idle');
   
   // Generate current app URL for the bookmarklet
   const appUrl = window.location.origin;
@@ -41,6 +41,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
     
     setIsLoading(true);
     setError(null);
+    setImportStatus('parsing');
     
     try {
       // Read the file content
@@ -52,6 +53,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
       if (parsedBookmarks.length === 0) {
         setError('No bookmarks found in the file. Make sure you uploaded a valid bookmarks HTML export file.');
         setImportedBookmarks([]);
+        setImportStatus('idle');
         return;
       }
       
@@ -71,6 +73,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
       console.error('Error parsing bookmarks:', err);
       setError('Could not parse the bookmarks file. Please make sure it\'s a valid HTML export from a browser.');
       setImportedBookmarks([]);
+      setImportStatus('idle');
     } finally {
       setIsLoading(false);
     }
@@ -81,6 +84,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
     
     setIsLoading(true);
     setError(null);
+    setImportStatus('importing');
     
     try {
       // Import the bookmarks
@@ -106,6 +110,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
     } catch (err) {
       console.error('Error importing bookmarks:', err);
       setError('An error occurred while importing bookmarks. Please try again.');
+      setImportStatus('parsed'); // Return to parsed state to allow retrying
     } finally {
       setIsLoading(false);
     }
@@ -122,12 +127,23 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
     }
   };
   
+  // Prevent modal from closing when clicking inside
+  const handleModalClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-      <div className="relative max-w-2xl w-full bg-card rounded-lg shadow-lg animate-scale-up">
-        <div className="flex justify-between items-center p-4 border-b">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    >
+      <div 
+        className="relative max-w-2xl w-full bg-card rounded-lg shadow-lg animate-scale-up overflow-y-auto max-h-[90vh]"
+        onClick={handleModalClick}
+      >
+        <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-card z-10">
           <h2 className="text-lg font-semibold">Import Bookmarks</h2>
           <button
             className="p-1 rounded-full hover:bg-secondary transition-colors"
@@ -146,6 +162,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
                 ? 'border-primary text-primary' 
                 : 'border-transparent hover:text-primary/70'}`}
               onClick={() => setActiveTab('import')}
+              disabled={isLoading}
             >
               Import from File
             </button>
@@ -154,6 +171,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
                 ? 'border-primary text-primary' 
                 : 'border-transparent hover:text-primary/70'}`}
               onClick={() => setActiveTab('bookmarklet')}
+              disabled={isLoading}
             >
               Quick Add Button
             </button>
@@ -207,6 +225,14 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
                 </>
               )}
               
+              {importStatus === 'parsing' && (
+                <div className="py-8 text-center">
+                  <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+                  <h3 className="text-lg font-medium">Parsing bookmarks...</h3>
+                  <p className="text-muted-foreground mt-2">This may take a moment for large bookmark files</p>
+                </div>
+              )}
+              
               {error && (
                 <div className="rounded-lg bg-destructive/20 p-4 text-destructive flex items-start">
                   <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
@@ -251,6 +277,14 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
                 </div>
               )}
               
+              {importStatus === 'importing' && (
+                <div className="py-8 text-center">
+                  <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+                  <h3 className="text-lg font-medium">Importing bookmarks...</h3>
+                  <p className="text-muted-foreground mt-2">This may take a moment</p>
+                </div>
+              )}
+              
               {importStatus === 'complete' && (
                 <div className="rounded-lg bg-green-500/20 p-4 text-green-500 flex items-start">
                   <Check className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
@@ -268,7 +302,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
                   Quick Add Bookmark Button
                 </h4>
                 <p className="mt-2 text-muted-foreground">
-                  Drag the button below to your bookmarks bar to quickly add any page you're viewing to your SploogeAssist collection.
+                  Drag the button below to your bookmarks bar to quickly add any page you're viewing to your collection.
                 </p>
               </div>
               
@@ -280,7 +314,7 @@ const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
                   draggable="true"
                 >
                   <BookmarkIcon className="h-5 w-5 mr-2" />
-                  Add to SploogeAssist
+                  Add to Collection
                 </a>
               </div>
               
