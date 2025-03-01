@@ -51,6 +51,11 @@ export const isVideoUrl = (url: string): boolean => {
   );
 };
 
+// Check if URL is a GIF
+export const isGifUrl = (url: string): boolean => {
+  return /\.gif(\?.*)?$/i.test(url);
+};
+
 // Extract YouTube video ID from URL
 export const getYouTubeVideoId = (url: string): string | null => {
   // Handle standard YouTube URLs
@@ -82,6 +87,24 @@ export const getBookmarkTypeFromUrl = (url: string): BookmarkType => {
   } else {
     return 'link';
   }
+};
+
+// Generate a thumbnail URL for a bookmark based on its URL
+export const generateThumbnailUrl = async (url: string): Promise<string | null> => {
+  // YouTube videos
+  const videoId = getYouTubeVideoId(url);
+  if (videoId) {
+    return generateYouTubeThumbnail(videoId);
+  }
+  
+  // For direct image or GIF URLs, use the URL itself
+  if (/\.(jpeg|jpg|gif|png|svg|webp)(\?.*)?$/i.test(url)) {
+    return url;
+  }
+  
+  // For other URLs, we could use an API service to generate thumbnails
+  // This would typically be a server-side operation, but for now we'll return null
+  return null;
 };
 
 // Filter and sort bookmarks based on filter options

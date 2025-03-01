@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, AlertTriangle } from 'lucide-react';
-import { getYouTubeVideoId } from '@/lib/bookmarkUtils';
+import { Play, AlertTriangle, Image as ImageIcon } from 'lucide-react';
+import { getYouTubeVideoId, isGifUrl } from '@/lib/bookmarkUtils';
 
 interface VideoThumbnailProps {
   url: string;
@@ -22,6 +22,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const posterRef = useRef<HTMLImageElement>(null);
   const videoId = getYouTubeVideoId(url);
+  const isGif = isGifUrl(url) || isGifUrl(thumbnailUrl || '');
   
   useEffect(() => {
     if (posterRef.current) {
@@ -52,6 +53,37 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       videoRef.current.pause();
     }
   };
+
+  // Render a GIF thumbnail
+  if (isGif) {
+    return (
+      <div className="bookmark-thumbnail relative">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 animate-pulse-soft">
+            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
+        )}
+        
+        {hasError ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted">
+            <AlertTriangle className="h-10 w-10 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">GIF unavailable</p>
+          </div>
+        ) : (
+          <img
+            ref={posterRef}
+            src={thumbnailUrl || url}
+            alt="GIF thumbnail"
+            className={`w-full h-full object-cover ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          />
+        )}
+        
+        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+          GIF
+        </div>
+      </div>
+    );
+  }
 
   // Render a YouTube embed thumbnail for YouTube videos
   if (videoId) {
