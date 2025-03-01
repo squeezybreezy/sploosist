@@ -30,6 +30,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
   const [isUrlValid, setIsUrlValid] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
+  const [hasManuallySetThumbnail, setHasManuallySetThumbnail] = useState(false);
   
   // Reset form when modal opens/closes or edit bookmark changes
   useEffect(() => {
@@ -41,6 +42,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         setSelectedTags(editBookmark.tags);
         setSelectedCategory(editBookmark.category?.id || '');
         setThumbnailUrl(editBookmark.thumbnailUrl || '');
+        setHasManuallySetThumbnail(!!editBookmark.thumbnailUrl);
       } else {
         setTitle('');
         setUrl('');
@@ -48,6 +50,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         setSelectedTags([]);
         setSelectedCategory('');
         setThumbnailUrl('');
+        setHasManuallySetThumbnail(false);
       }
       setIsUrlValid(true);
       setIsLoading(false);
@@ -66,10 +69,12 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         new URL(url);
         setIsUrlValid(true);
         
-        // For YouTube videos, extract a thumbnail automatically
-        const videoId = getYouTubeVideoId(url);
-        if (videoId) {
-          setThumbnailUrl(generateYouTubeThumbnail(videoId));
+        // For YouTube videos, extract a thumbnail automatically only if user hasn't set one manually
+        if (!hasManuallySetThumbnail) {
+          const videoId = getYouTubeVideoId(url);
+          if (videoId) {
+            setThumbnailUrl(generateYouTubeThumbnail(videoId));
+          }
         }
       } catch (e) {
         setIsUrlValid(false);
@@ -77,7 +82,12 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
     };
     
     validateUrl();
-  }, [url]);
+  }, [url, hasManuallySetThumbnail]);
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setThumbnailUrl(e.target.value);
+    setHasManuallySetThumbnail(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,7 +204,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
               id="thumbnailUrl"
               type="text"
               value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
+              onChange={handleThumbnailChange}
               className="w-full px-3 py-2 border border-border rounded-md text-white bg-secondary"
               placeholder="URL for the thumbnail image"
             />
