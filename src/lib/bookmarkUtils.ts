@@ -1,4 +1,3 @@
-
 import { Bookmark, BookmarkFilters, BookmarkType, SortOption } from './types';
 
 // Generate a unique ID for new entities
@@ -70,6 +69,16 @@ export const generateYouTubeThumbnail = (videoId: string, quality: 'default' | '
   return `https://img.youtube.com/vi/${videoId}/${quality}default.jpg`;
 };
 
+// Get a screenshot of a webpage using a screenshot service
+export const getWebsiteScreenshot = (url: string): string => {
+  // URL-encode the target URL
+  const encodedUrl = encodeURIComponent(url);
+  
+  // Use the Screenshotone API (free tier with watermark)
+  // You could also use other services like Microlink, PageScreenshot, or ScreenshotAPI
+  return `https://api.screenshotone.com/take?access_key=free&url=${encodedUrl}&device_scale_factor=1&format=jpg&image_quality=85&viewport_width=1280&viewport_height=800`;
+};
+
 // Determine bookmark type from URL
 export const getBookmarkTypeFromUrl = (url: string): BookmarkType => {
   const imageRegex = /\.(jpeg|jpg|gif|png|svg|webp)(\?.*)?$/i;
@@ -102,9 +111,8 @@ export const generateThumbnailUrl = async (url: string): Promise<string | null> 
     return url;
   }
   
-  // For other URLs, we could use an API service to generate thumbnails
-  // This would typically be a server-side operation, but for now we'll return null
-  return null;
+  // Get website screenshot for other URLs
+  return getWebsiteScreenshot(url);
 };
 
 // Filter and sort bookmarks based on filter options

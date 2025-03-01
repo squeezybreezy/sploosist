@@ -3,7 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, Link as LinkIcon } from 'lucide-react';
 import TagsInput from './TagsInput';
 import { Tag, Category, Bookmark } from '@/lib/types';
-import { generateUniqueId, getBookmarkTypeFromUrl, isVideoUrl, getYouTubeVideoId, generateYouTubeThumbnail } from '@/lib/bookmarkUtils';
+import { 
+  generateUniqueId, 
+  getBookmarkTypeFromUrl, 
+  isVideoUrl, 
+  getYouTubeVideoId, 
+  generateYouTubeThumbnail,
+  getWebsiteScreenshot
+} from '@/lib/bookmarkUtils';
 
 interface AddBookmarkModalProps {
   isOpen: boolean;
@@ -31,6 +38,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [hasManuallySetThumbnail, setHasManuallySetThumbnail] = useState(false);
+  const [isGeneratingScreenshot, setIsGeneratingScreenshot] = useState(false);
   
   // Reset form when modal opens/closes or edit bookmark changes
   useEffect(() => {
@@ -74,6 +82,15 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
           const videoId = getYouTubeVideoId(url);
           if (videoId) {
             setThumbnailUrl(generateYouTubeThumbnail(videoId));
+          } else {
+            // For non-YouTube URLs and if no thumbnail is set, generate a screenshot
+            setIsGeneratingScreenshot(true);
+            // We're using a timeout to avoid blocking the UI and to simulate the API call
+            // In a real scenario, you'd make an actual API call here
+            setTimeout(() => {
+              setThumbnailUrl(getWebsiteScreenshot(url));
+              setIsGeneratingScreenshot(false);
+            }, 500);
           }
         }
       } catch (e) {
@@ -208,13 +225,23 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
               className="w-full px-3 py-2 border border-border rounded-md text-white bg-secondary"
               placeholder="URL for the thumbnail image"
             />
+            {isGeneratingScreenshot && (
+              <div className="mt-2 flex items-center text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                Generating screenshot...
+              </div>
+            )}
             {thumbnailUrl && (
               <div className="mt-2 h-24 w-auto overflow-hidden rounded border border-border">
                 <img 
                   src={thumbnailUrl} 
                   alt="Thumbnail preview" 
                   className="h-full w-full object-cover"
-                  onError={() => setThumbnailUrl('')}
+                  onError={() => {
+                    if (!hasManuallySetThumbnail) {
+                      setThumbnailUrl('');
+                    }
+                  }}
                 />
               </div>
             )}
