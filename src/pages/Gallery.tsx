@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import PageWrapper from '@/components/PageWrapper';
 import { motion } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Gallery images from uploads
 const galleryImages = [
@@ -74,7 +76,23 @@ const Gallery = () => {
   return (
     <PageWrapper>
       <div className="min-h-screen bg-gradient-to-br from-[#1A1F2C] via-[#6E59A5] to-[#FF6B9F] text-white">
-        <div className="container mx-auto py-12 px-4">
+        <div className="container mx-auto py-12 px-4 relative">
+          {/* Back to bookmarks link */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="absolute top-4 left-4 z-10"
+          >
+            <Link
+              to="/"
+              className="flex items-center gap-1 text-pink-200 hover:text-white transition-colors bg-black/30 backdrop-blur-sm px-3 py-2 rounded-full text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Bookmarks</span>
+            </Link>
+          </motion.div>
+          
           <motion.p 
             className="text-xl text-center mb-12 max-w-2xl mx-auto text-pink-200"
             initial={{ opacity: 0 }}
