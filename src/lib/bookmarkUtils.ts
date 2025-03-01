@@ -74,8 +74,7 @@ export const getWebsiteScreenshot = (url: string): string => {
   // URL-encode the target URL
   const encodedUrl = encodeURIComponent(url);
   
-  // Use the Screenshotone API (free tier with watermark)
-  // You could also use other services like Microlink, PageScreenshot, or ScreenshotAPI
+  // Use the Screenshotone API with appropriate parameters
   return `https://api.screenshotone.com/take?access_key=free&url=${encodedUrl}&device_scale_factor=1&format=jpg&image_quality=85&viewport_width=1280&viewport_height=800`;
 };
 

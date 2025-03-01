@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, Link as LinkIcon } from 'lucide-react';
 import TagsInput from './TagsInput';
@@ -11,6 +10,7 @@ import {
   generateYouTubeThumbnail,
   getWebsiteScreenshot
 } from '@/lib/bookmarkUtils';
+import { toast } from "@/hooks/use-toast";
 
 interface AddBookmarkModalProps {
   isOpen: boolean;
@@ -40,7 +40,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
   const [hasManuallySetThumbnail, setHasManuallySetThumbnail] = useState(false);
   const [isGeneratingScreenshot, setIsGeneratingScreenshot] = useState(false);
   
-  // Reset form when modal opens/closes or edit bookmark changes
   useEffect(() => {
     if (isOpen) {
       if (editBookmark) {
@@ -65,7 +64,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
     }
   }, [isOpen, editBookmark]);
 
-  // When URL changes, validate it and try to fetch metadata if valid
   useEffect(() => {
     const validateUrl = () => {
       if (!url) {
@@ -77,19 +75,25 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         new URL(url);
         setIsUrlValid(true);
         
-        // For YouTube videos, extract a thumbnail automatically only if user hasn't set one manually
         if (!hasManuallySetThumbnail) {
           const videoId = getYouTubeVideoId(url);
           if (videoId) {
             setThumbnailUrl(generateYouTubeThumbnail(videoId));
-          } else {
-            // For non-YouTube URLs and if no thumbnail is set, generate a screenshot
+          } else if (!/javascript:/i.test(url)) {
             setIsGeneratingScreenshot(true);
-            // We're using a timeout to avoid blocking the UI and to simulate the API call
-            // In a real scenario, you'd make an actual API call here
             setTimeout(() => {
-              setThumbnailUrl(getWebsiteScreenshot(url));
-              setIsGeneratingScreenshot(false);
+              try {
+                setThumbnailUrl(getWebsiteScreenshot(url));
+              } catch (error) {
+                console.error("Error generating screenshot:", error);
+                toast({
+                  title: "Error",
+                  description: "Could not generate thumbnail for this URL",
+                  variant: "destructive"
+                });
+              } finally {
+                setIsGeneratingScreenshot(false);
+              }
             }, 500);
           }
         }
@@ -116,7 +120,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
     setIsLoading(true);
     
     try {
-      // Build the bookmark object
       const newBookmark: Bookmark = {
         id: editBookmark?.id || generateUniqueId(),
         url,
@@ -161,7 +164,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         </div>
         
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* URL input */}
           <div className="space-y-1">
             <label htmlFor="url" className="text-sm font-medium text-white">
               URL <span className="text-destructive">*</span>
@@ -183,7 +185,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
             )}
           </div>
           
-          {/* Title input */}
           <div className="space-y-1">
             <label htmlFor="title" className="text-sm font-medium text-white">
               Title
@@ -198,7 +199,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
             />
           </div>
           
-          {/* Description input */}
           <div className="space-y-1">
             <label htmlFor="description" className="text-sm font-medium text-white">
               Description
@@ -212,7 +212,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
             />
           </div>
           
-          {/* Thumbnail URL input */}
           <div className="space-y-1">
             <label htmlFor="thumbnailUrl" className="text-sm font-medium text-white">
               Thumbnail URL
@@ -247,7 +246,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
             )}
           </div>
           
-          {/* Tags input */}
           <div className="space-y-1">
             <label htmlFor="tags" className="text-sm font-medium text-white">
               Tags
@@ -260,7 +258,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
             />
           </div>
           
-          {/* Category select */}
           <div className="space-y-1">
             <label htmlFor="category" className="text-sm font-medium text-white">
               Category
@@ -280,7 +277,6 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
             </select>
           </div>
           
-          {/* Submit button */}
           <div className="flex justify-end pt-2">
             <button
               type="button"
