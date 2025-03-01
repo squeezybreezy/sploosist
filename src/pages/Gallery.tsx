@@ -75,22 +75,13 @@ const Gallery = () => {
     <PageWrapper>
       <div className="min-h-screen bg-gradient-to-br from-[#1A1F2C] via-[#6E59A5] to-[#FF6B9F] text-white">
         <div className="container mx-auto py-12 px-4">
-          <motion.h1 
-            className="text-4xl md:text-6xl font-bold text-center mb-4 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-200"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            Mackie's Secret Gallery
-          </motion.h1>
-          
           <motion.p 
             className="text-xl text-center mb-12 max-w-2xl mx-auto text-pink-200"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            You found the hidden collection! Enjoy these exclusive images that only you know about.
+            You found the hidden collection!
           </motion.p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -161,20 +152,6 @@ const Gallery = () => {
               </motion.div>
             ))}
           </div>
-
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.6 }}
-          >
-            <p className="text-lg text-pink-200 mb-4">
-              This gallery is our little secret. Only those who know where to click can find it!
-            </p>
-            <p className="text-sm text-purple-300 italic">
-              Remember to splat your favorites!
-            </p>
-          </motion.div>
         </div>
       </div>
     </PageWrapper>
