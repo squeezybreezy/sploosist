@@ -16,7 +16,7 @@ interface VideoThumbnailProps {
 const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   url,
   thumbnailUrl,
-  videoThumbnailTimestamp = 60,
+  videoThumbnailTimestamp = 5, // Changed default from 60 to 5 seconds for better previews
   onError
 }) => {
   const videoId = getYouTubeVideoId(url);
