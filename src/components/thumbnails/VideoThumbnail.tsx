@@ -37,22 +37,12 @@ const DirectVideoThumbnail: React.FC<DirectVideoThumbnailProps> = ({
 
           video.crossOrigin = "anonymous";
           video.muted = true;
+          video.preload = "metadata";
           
           // Set up event handlers before setting src to avoid race conditions
           let thumbnailGenerated = false;
           
-          video.onloadedmetadata = () => {
-            video.currentTime = videoThumbnailTimestamp;
-          };
-          
-          video.oncanplay = () => {
-            // Sometimes the seek may not be ready yet
-            if (video.currentTime < videoThumbnailTimestamp - 0.1) {
-              video.currentTime = videoThumbnailTimestamp;
-            }
-          };
-          
-          // Handle cases where seeking might fail or video can't be played
+          // Set up timeout for generation to prevent infinite loading
           const timeoutId = setTimeout(() => {
             if (!thumbnailGenerated) {
               console.log("Video thumbnail generation timed out");
@@ -65,32 +55,73 @@ const DirectVideoThumbnail: React.FC<DirectVideoThumbnailProps> = ({
               video.src = "";
               video.load();
             }
-          }, 10000); // 10 second timeout
+          }, 15000); // 15 second timeout
+
+          // Handle loading metadata first
+          video.onloadedmetadata = () => {
+            // Only seek after metadata is loaded
+            try {
+              video.currentTime = videoThumbnailTimestamp;
+            } catch (err) {
+              console.error("Error setting currentTime:", err);
+              
+              // If seeking fails, try playing then seeking
+              video.play().then(() => {
+                setTimeout(() => {
+                  video.currentTime = videoThumbnailTimestamp;
+                }, 500);
+              }).catch(playError => {
+                console.error("Error playing video for thumbnail:", playError);
+                clearTimeout(timeoutId);
+                setIsLoading(false);
+                setHasError(true);
+                if (onError) onError();
+              });
+            }
+          };
           
+          // When reached the correct time in the video
           video.onseeked = () => {
             if (thumbnailGenerated) return; // Avoid duplicate processing
             
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext("2d");
-            
-            if (ctx) {
-              try {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const thumbnail = canvas.toDataURL("image/jpeg", 0.8);
-                setGeneratedThumbnail(thumbnail);
-                thumbnailGenerated = true;
+            try {
+              canvas.width = video.videoWidth || 640;
+              canvas.height = video.videoHeight || 360;
+              const ctx = canvas.getContext("2d");
+              
+              if (ctx) {
+                try {
+                  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                  const thumbnail = canvas.toDataURL("image/jpeg", 0.8);
+                  setGeneratedThumbnail(thumbnail);
+                  thumbnailGenerated = true;
+                  setIsLoading(false);
+                  clearTimeout(timeoutId);
+                } catch (drawError) {
+                  console.error("Error drawing video frame:", drawError);
+                  setIsLoading(false);
+                  setHasError(true);
+                  if (onError) onError();
+                  clearTimeout(timeoutId);
+                }
+              } else {
                 setIsLoading(false);
+                setHasError(true);
+                if (onError) onError();
                 clearTimeout(timeoutId);
-              } catch (error) {
-                console.error("Error generating thumbnail:", error);
               }
+              
+              // Clean up
+              video.pause();
+              video.src = "";
+              video.load();
+            } catch (seekedError) {
+              console.error("Error in onseeked handler:", seekedError);
+              setIsLoading(false);
+              setHasError(true);
+              if (onError) onError();
+              clearTimeout(timeoutId);
             }
-            
-            // Clean up
-            video.pause();
-            video.src = "";
-            video.load();
           };
           
           video.onerror = () => {
@@ -101,9 +132,20 @@ const DirectVideoThumbnail: React.FC<DirectVideoThumbnailProps> = ({
             clearTimeout(timeoutId);
           };
           
+          // CORS issues can cause problems
+          video.oncanplay = () => {
+            // Attempt to capture frame again if we haven't already
+            if (!thumbnailGenerated && video.currentTime < videoThumbnailTimestamp - 0.5) {
+              try {
+                video.currentTime = videoThumbnailTimestamp;
+              } catch (err) {
+                console.error("Error setting currentTime in oncanplay:", err);
+              }
+            }
+          };
+          
           // Set the source last after all handlers are set up
           video.src = url;
-          
         } catch (error) {
           console.error("Thumbnail generation error:", error);
           setIsLoading(false);
@@ -133,17 +175,25 @@ const DirectVideoThumbnail: React.FC<DirectVideoThumbnailProps> = ({
     setIsHovered(true);
     if (videoRef.current) {
       // Reset the video to the timestamp when hovering
-      videoRef.current.currentTime = videoThumbnailTimestamp;
-      videoRef.current.play().catch(error => {
-        console.error("Error playing video on hover:", error);
-      });
+      try {
+        videoRef.current.currentTime = videoThumbnailTimestamp;
+        videoRef.current.play().catch(error => {
+          console.error("Error playing video on hover:", error);
+        });
+      } catch (err) {
+        console.error("Error in handleMouseEnter:", err);
+      }
     }
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
     if (videoRef.current) {
-      videoRef.current.pause();
+      try {
+        videoRef.current.pause();
+      } catch (err) {
+        console.error("Error pausing video:", err);
+      }
     }
   };
 
@@ -151,6 +201,28 @@ const DirectVideoThumbnail: React.FC<DirectVideoThumbnailProps> = ({
     setHasError(true);
     if (onError) onError();
   };
+
+  // Try loading the video in the background to check if it's valid
+  useEffect(() => {
+    // Skip if we already have an error or if we have a valid thumbnail
+    if (hasError || (displayThumbnail && !isLoading)) return;
+    
+    const validateVideoUrl = async () => {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (!response.ok) {
+          console.error(`Video fetch failed with status: ${response.status}`);
+          setHasError(true);
+          if (onError) onError();
+        }
+      } catch (error) {
+        console.error("Error validating video URL:", error);
+        // Don't set error here, as some videos might still work despite HEAD request failing
+      }
+    };
+    
+    validateVideoUrl();
+  }, [url, hasError, onError]);
 
   // Determine which thumbnail to use
   const displayThumbnail = thumbnailUrl || generatedThumbnail;
@@ -182,6 +254,10 @@ const DirectVideoThumbnail: React.FC<DirectVideoThumbnailProps> = ({
               src={displayThumbnail}
               alt="Video thumbnail"
               className={`w-full h-full object-cover ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+              onError={() => {
+                setHasError(true);
+                if (onError) onError();
+              }}
             />
           ) : (
             <div className={`absolute inset-0 flex flex-col items-center justify-center bg-muted ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>

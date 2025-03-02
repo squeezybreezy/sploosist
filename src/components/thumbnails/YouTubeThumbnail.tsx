@@ -29,42 +29,44 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
     if (!thumbnailUrl) {
       setIsLoading(true);
       
-      // First try high-quality thumbnail
-      const highQualityImage = new Image();
-      highQualityImage.onload = () => {
-        setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
-        setIsLoading(false);
-      };
+      // Try all YouTube thumbnail qualities in sequence
+      const qualities = ['maxresdefault', 'hqdefault', 'mqdefault', 'sddefault', 'default'];
+      let currentQualityIndex = 0;
       
-      highQualityImage.onerror = () => {
-        // If high quality fails, try standard quality
-        const standardImage = new Image();
-        standardImage.onload = () => {
-          setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+      const tryNextQuality = () => {
+        if (currentQualityIndex >= qualities.length) {
+          // All qualities failed
           setIsLoading(false);
+          setHasError(true);
+          if (onError) onError();
+          return;
+        }
+        
+        const quality = qualities[currentQualityIndex];
+        const qualityImage = new Image();
+        
+        qualityImage.onload = () => {
+          // Check if image is a real image and not a 120x90 "no thumbnail" placeholder
+          if (quality === 'default' || (qualityImage.width > 120 && qualityImage.height > 90)) {
+            setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/${quality}.jpg`);
+            setIsLoading(false);
+          } else {
+            // Try next quality
+            currentQualityIndex++;
+            tryNextQuality();
+          }
         };
         
-        standardImage.onerror = () => {
-          // If standard quality fails, try medium quality
-          const mediumImage = new Image();
-          mediumImage.onload = () => {
-            setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`);
-            setIsLoading(false);
-          };
-          
-          mediumImage.onerror = () => {
-            // Fall back to default thumbnail
-            setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/default.jpg`);
-            setIsLoading(false);
-          };
-          
-          mediumImage.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+        qualityImage.onerror = () => {
+          // Try next quality
+          currentQualityIndex++;
+          tryNextQuality();
         };
         
-        standardImage.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        qualityImage.src = `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
       };
       
-      highQualityImage.src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      tryNextQuality();
     } else if (posterRef.current) {
       const img = posterRef.current;
       if (img.complete) {
@@ -73,19 +75,23 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
         img.onload = () => setIsLoading(false);
         img.onerror = () => {
           // If provided thumbnail fails, fall back to YouTube generated ones
-          const fallbackImage = new Image();
-          fallbackImage.onload = () => {
-            setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
-            setIsLoading(false);
+          const tryYouTubeThumbnail = () => {
+            const fallbackImage = new Image();
+            fallbackImage.onload = () => {
+              setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+              setIsLoading(false);
+            };
+            
+            fallbackImage.onerror = () => {
+              setIsLoading(false);
+              setHasError(true);
+              if (onError) onError();
+            };
+            
+            fallbackImage.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
           };
           
-          fallbackImage.onerror = () => {
-            setIsLoading(false);
-            setHasError(true);
-            if (onError) onError();
-          };
-          
-          fallbackImage.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+          tryYouTubeThumbnail();
         };
       }
     }
@@ -133,10 +139,26 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
             src={displayThumbnail}
             alt="Video thumbnail"
             className={`w-full h-full object-cover ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-            onError={() => {
-              // If the thumbnail fails to load, try a fallback YouTube thumbnail
-              if (posterRef.current) {
-                posterRef.current.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            onError={(e) => {
+              // If the thumbnail fails to load, try multiple fallbacks
+              const target = e.target as HTMLImageElement;
+              const currentSrc = target.src;
+              
+              // Try different YouTube qualities if we're using a YouTube URL
+              if (currentSrc.includes('youtube.com/vi/')) {
+                if (currentSrc.includes('maxresdefault')) {
+                  target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                } else if (currentSrc.includes('hqdefault')) {
+                  target.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                } else if (currentSrc.includes('mqdefault')) {
+                  target.src = `https://img.youtube.com/vi/${videoId}/default.jpg`;
+                } else {
+                  setHasError(true);
+                  if (onError) onError();
+                }
+              } else {
+                // If not a YouTube URL or all fallbacks failed
+                target.src = `https://img.youtube.com/vi/${videoId}/default.jpg`;
               }
             }}
           />

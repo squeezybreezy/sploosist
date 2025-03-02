@@ -23,7 +23,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   const isGif = isGifUrl(url) || isGifUrl(thumbnailUrl || '');
   
   // Support for direct video URLs (non-YouTube)
-  const isDirectVideoUrl = /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url);
+  const isDirectVideoUrl = /\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)(\?.*)?$/i.test(url);
 
   // Render a GIF thumbnail
   if (isGif) {
@@ -61,7 +61,8 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     );
   }
 
-  // Render a generic video thumbnail for other video URLs
+  // For other video URLs that aren't direct video files or YouTube,
+  // use a generic thumbnail or the provided thumbnailUrl
   return (
     <GenericThumbnail 
       thumbnailUrl={thumbnailUrl} 
