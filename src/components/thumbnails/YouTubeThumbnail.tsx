@@ -23,50 +23,48 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
   const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
   const posterRef = useRef<HTMLImageElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const thumbnailCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // Set up thumbnail generation for YouTube videos
   useEffect(() => {
-    if (generateThumbnail && !thumbnailUrl) {
+    if (!thumbnailUrl) {
       setIsLoading(true);
       
-      // Create hidden canvas for thumbnail generation
-      if (!thumbnailCanvasRef.current) {
-        thumbnailCanvasRef.current = document.createElement('canvas');
-        thumbnailCanvasRef.current.width = 640;
-        thumbnailCanvasRef.current.height = 360;
-      }
+      // First try high-quality thumbnail
+      const highQualityImage = new Image();
+      highQualityImage.onload = () => {
+        setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
+        setIsLoading(false);
+      };
       
-      // We'll use the YouTube iframe API to load the video and capture at the timestamp
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.opacity = '0';
-      iframe.style.pointerEvents = 'none';
-      iframe.width = '640';
-      iframe.height = '360';
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&modestbranding=1&start=${videoThumbnailTimestamp}`;
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-      
-      // This is imperfect, but an approach for YouTube where we can't directly access video frames
-      // Instead we'll use the high-quality thumbnail as fallback
-      setTimeout(() => {
-        try {
-          // Use high-quality YouTube thumbnail as fallback
-          setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
+      highQualityImage.onerror = () => {
+        // If high quality fails, try standard quality
+        const standardImage = new Image();
+        standardImage.onload = () => {
+          setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
           setIsLoading(false);
-        } catch (err) {
-          console.error("Error generating YouTube thumbnail:", err);
-          setIsLoading(false);
-          setHasError(true);
-          if (onError) onError();
-        }
+        };
         
-        // Remove iframe
-        document.body.removeChild(iframe);
-      }, 1500);
+        standardImage.onerror = () => {
+          // If standard quality fails, try medium quality
+          const mediumImage = new Image();
+          mediumImage.onload = () => {
+            setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`);
+            setIsLoading(false);
+          };
+          
+          mediumImage.onerror = () => {
+            // Fall back to default thumbnail
+            setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/default.jpg`);
+            setIsLoading(false);
+          };
+          
+          mediumImage.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+        };
+        
+        standardImage.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      };
       
-      // Append iframe to body temporarily
-      document.body.appendChild(iframe);
+      highQualityImage.src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
     } else if (posterRef.current) {
       const img = posterRef.current;
       if (img.complete) {
@@ -74,13 +72,24 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
       } else {
         img.onload = () => setIsLoading(false);
         img.onerror = () => {
-          setIsLoading(false);
-          setHasError(true);
-          if (onError) onError();
+          // If provided thumbnail fails, fall back to YouTube generated ones
+          const fallbackImage = new Image();
+          fallbackImage.onload = () => {
+            setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+            setIsLoading(false);
+          };
+          
+          fallbackImage.onerror = () => {
+            setIsLoading(false);
+            setHasError(true);
+            if (onError) onError();
+          };
+          
+          fallbackImage.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
         };
       }
     }
-  }, [videoId, thumbnailUrl, videoThumbnailTimestamp, onError, generateThumbnail]);
+  }, [videoId, thumbnailUrl, onError]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -90,8 +99,14 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
     setIsHovered(false);
   };
 
+  const handleIframeError = () => {
+    if (iframeRef.current) {
+      iframeRef.current.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=0&showinfo=0&modestbranding=1`;
+    }
+  };
+
   // Determine which thumbnail to use
-  const displayThumbnail = thumbnailUrl || generatedThumbnail || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  const displayThumbnail = thumbnailUrl || generatedThumbnail || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
   return (
     <div 
@@ -118,6 +133,12 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
             src={displayThumbnail}
             alt="Video thumbnail"
             className={`w-full h-full object-cover ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+            onError={() => {
+              // If the thumbnail fails to load, try a fallback YouTube thumbnail
+              if (posterRef.current) {
+                posterRef.current.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+              }
+            }}
           />
           
           {/* YouTube iframe preview (shown when hovering) */}
@@ -133,6 +154,7 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
                 title="YouTube video player"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                onError={handleIframeError}
               ></iframe>
             )}
           </div>

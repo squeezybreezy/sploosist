@@ -56,6 +56,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
         url={url} 
         thumbnailUrl={thumbnailUrl} 
         videoThumbnailTimestamp={videoThumbnailTimestamp} 
+        onError={onError}
       />
     );
   }
