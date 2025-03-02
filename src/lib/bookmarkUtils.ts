@@ -46,7 +46,9 @@ export const isVideoUrl = (url: string): boolean => {
     videoRegex.test(url) ||
     url.includes('youtube.com') ||
     url.includes('youtu.be') ||
-    url.includes('vimeo.com')
+    url.includes('vimeo.com') ||
+    url.includes('dailymotion.com') ||
+    url.includes('twitch.tv')
   );
 };
 
@@ -62,6 +64,66 @@ export const getYouTubeVideoId = (url: string): string | null => {
   const match = url.match(regExp);
   
   return (match && match[2].length === 11) ? match[2] : null;
+};
+
+// Extract frames from a video file
+export const extractVideoFrame = async (
+  videoUrl: string, 
+  timestamp: number = 5
+): Promise<string | null> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const canvas = document.createElement("canvas");
+      const video = document.createElement("video");
+
+      video.src = videoUrl;
+      video.crossOrigin = "anonymous";
+      video.currentTime = timestamp;
+      video.muted = true;
+      
+      video.onloadedmetadata = () => {
+        video.play().catch(err => {
+          console.error("Error playing video:", err);
+          reject(err);
+        });
+      };
+      
+      video.onplaying = () => {
+        setTimeout(() => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext("2d");
+          
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            try {
+              const thumbnail = canvas.toDataURL("image/jpeg", 0.8);
+              resolve(thumbnail);
+              video.pause();
+            } catch (error) {
+              console.error("Error generating thumbnail:", error);
+              reject(error);
+            }
+          } else {
+            reject(new Error("Could not get canvas context"));
+          }
+          
+          // Clean up
+          video.pause();
+          video.src = "";
+          video.load();
+        }, 500); // Small delay to ensure the frame is loaded
+      };
+      
+      video.onerror = (error) => {
+        console.error("Error loading video for thumbnail generation:", error);
+        reject(error);
+      };
+    } catch (error) {
+      console.error("Thumbnail generation error:", error);
+      reject(error);
+    }
+  });
 };
 
 // Generate YouTube thumbnail URL from video ID
@@ -108,6 +170,15 @@ export const generateThumbnailUrl = async (url: string): Promise<string | null> 
   // For direct image or GIF URLs, use the URL itself
   if (/\.(jpeg|jpg|gif|png|svg|webp)(\?.*)?$/i.test(url)) {
     return url;
+  }
+  
+  // For direct video URLs, try to extract a frame
+  if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url)) {
+    try {
+      return await extractVideoFrame(url, 5);
+    } catch (err) {
+      console.error("Could not extract video frame:", err);
+    }
   }
   
   // Get website screenshot for other URLs

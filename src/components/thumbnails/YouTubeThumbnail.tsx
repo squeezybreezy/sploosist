@@ -1,27 +1,73 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, AlertTriangle } from 'lucide-react';
+import { Play, AlertTriangle, Loader } from 'lucide-react';
 
 interface YouTubeThumbnailProps {
   videoId: string;
   thumbnailUrl?: string;
   videoThumbnailTimestamp: number;
   onError?: () => void;
+  generateThumbnail?: boolean;
 }
 
 const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
   videoId,
   thumbnailUrl,
   videoThumbnailTimestamp,
-  onError
+  onError,
+  generateThumbnail = false
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [generatedThumbnail, setGeneratedThumbnail] = useState<string | null>(null);
   const posterRef = useRef<HTMLImageElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const thumbnailCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
+  // Set up thumbnail generation for YouTube videos
   useEffect(() => {
-    if (posterRef.current) {
+    if (generateThumbnail && !thumbnailUrl) {
+      setIsLoading(true);
+      
+      // Create hidden canvas for thumbnail generation
+      if (!thumbnailCanvasRef.current) {
+        thumbnailCanvasRef.current = document.createElement('canvas');
+        thumbnailCanvasRef.current.width = 640;
+        thumbnailCanvasRef.current.height = 360;
+      }
+      
+      // We'll use the YouTube iframe API to load the video and capture at the timestamp
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      iframe.width = '640';
+      iframe.height = '360';
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&modestbranding=1&start=${videoThumbnailTimestamp}`;
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      
+      // This is imperfect, but an approach for YouTube where we can't directly access video frames
+      // Instead we'll use the high-quality thumbnail as fallback
+      setTimeout(() => {
+        try {
+          // Use high-quality YouTube thumbnail as fallback
+          setGeneratedThumbnail(`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`);
+          setIsLoading(false);
+        } catch (err) {
+          console.error("Error generating YouTube thumbnail:", err);
+          setIsLoading(false);
+          setHasError(true);
+          if (onError) onError();
+        }
+        
+        // Remove iframe
+        document.body.removeChild(iframe);
+      }, 1500);
+      
+      // Append iframe to body temporarily
+      document.body.appendChild(iframe);
+    } else if (posterRef.current) {
       const img = posterRef.current;
       if (img.complete) {
         setIsLoading(false);
@@ -34,7 +80,7 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
         };
       }
     }
-  }, [thumbnailUrl, onError]);
+  }, [videoId, thumbnailUrl, videoThumbnailTimestamp, onError, generateThumbnail]);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -44,6 +90,9 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
     setIsHovered(false);
   };
 
+  // Determine which thumbnail to use
+  const displayThumbnail = thumbnailUrl || generatedThumbnail || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
   return (
     <div 
       className="bookmark-thumbnail group relative"
@@ -52,7 +101,7 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
     >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 animate-pulse-soft">
-          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <Loader className="h-8 w-8 text-primary animate-spin" />
         </div>
       )}
       
@@ -66,7 +115,7 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
           {/* Static thumbnail (shown when not hovering) */}
           <img
             ref={posterRef}
-            src={thumbnailUrl || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+            src={displayThumbnail}
             alt="Video thumbnail"
             className={`w-full h-full object-cover ${isHovered ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           />
@@ -77,6 +126,7 @@ const YouTubeThumbnail: React.FC<YouTubeThumbnailProps> = ({
           >
             {isHovered && (
               <iframe
+                ref={iframeRef}
                 width="100%"
                 height="100%"
                 src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&modestbranding=1&loop=1&playlist=${videoId}&start=${videoThumbnailTimestamp}`}
