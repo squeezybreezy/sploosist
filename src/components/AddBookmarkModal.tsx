@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Loader2, Link as LinkIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Loader2, Link as LinkIcon, AlertCircle, RefreshCw, Image, FileText, Video, Globe } from 'lucide-react';
 import TagsInput from './TagsInput';
 import { Tag, Category, Bookmark } from '@/lib/types';
 import { 
@@ -7,9 +7,11 @@ import {
   getBookmarkTypeFromUrl, 
   isVideoUrl, 
   getYouTubeVideoId, 
-  generateYouTubeThumbnail,
-  getWebsiteScreenshot
+  isImageUrl,
+  isDocumentUrl,
+  getWebsiteFavicon
 } from '@/lib/bookmarkUtils';
+import { generateThumbnail, regenerateThumbnail } from '@/lib/thumbnailService';
 import { toast } from "@/hooks/use-toast";
 
 interface AddBookmarkModalProps {
@@ -38,7 +40,8 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [hasManuallySetThumbnail, setHasManuallySetThumbnail] = useState(false);
-  const [isGeneratingScreenshot, setIsGeneratingScreenshot] = useState(false);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  const [bookmarkType, setBookmarkType] = useState<'link' | 'video' | 'image' | 'document'>('link');
   
   useEffect(() => {
     if (isOpen) {
@@ -50,6 +53,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         setSelectedCategory(editBookmark.category?.id || '');
         setThumbnailUrl(editBookmark.thumbnailUrl || '');
         setHasManuallySetThumbnail(!!editBookmark.thumbnailUrl);
+        setBookmarkType(editBookmark.type || 'link');
       } else {
         setTitle('');
         setUrl('');
@@ -58,6 +62,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         setSelectedCategory('');
         setThumbnailUrl('');
         setHasManuallySetThumbnail(false);
+        setBookmarkType('link');
       }
       setIsUrlValid(true);
       setIsLoading(false);
@@ -65,7 +70,7 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
   }, [isOpen, editBookmark]);
 
   useEffect(() => {
-    const validateUrl = () => {
+    const validateUrl = async () => {
       if (!url) {
         setIsUrlValid(true);
         return;
@@ -75,26 +80,28 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         new URL(url);
         setIsUrlValid(true);
         
+        // Determine the bookmark type
+        const type = getBookmarkTypeFromUrl(url);
+        setBookmarkType(type);
+        
+        // Generate thumbnail if not manually set
         if (!hasManuallySetThumbnail) {
-          const videoId = getYouTubeVideoId(url);
-          if (videoId) {
-            setThumbnailUrl(generateYouTubeThumbnail(videoId));
-          } else if (!/javascript:/i.test(url)) {
-            setIsGeneratingScreenshot(true);
-            setTimeout(() => {
-              try {
-                setThumbnailUrl(getWebsiteScreenshot(url));
-              } catch (error) {
-                console.error("Error generating screenshot:", error);
-                toast({
-                  title: "Error",
-                  description: "Could not generate thumbnail for this URL",
-                  variant: "destructive"
-                });
-              } finally {
-                setIsGeneratingScreenshot(false);
-              }
-            }, 500);
+          setIsGeneratingThumbnail(true);
+          
+          try {
+            const newThumbnailUrl = await generateThumbnail(url, type);
+            if (newThumbnailUrl) {
+              setThumbnailUrl(newThumbnailUrl);
+            }
+          } catch (error) {
+            console.error("Error generating thumbnail:", error);
+            toast({
+              title: "Warning",
+              description: "Could not generate thumbnail for this URL",
+              variant: "destructive"
+            });
+          } finally {
+            setIsGeneratingThumbnail(false);
           }
         }
       } catch (e) {
@@ -108,6 +115,41 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setThumbnailUrl(e.target.value);
     setHasManuallySetThumbnail(true);
+  };
+
+  const handleRegenerateThumbnail = async () => {
+    if (!url || !isUrlValid) return;
+    
+    setIsGeneratingThumbnail(true);
+    
+    try {
+      const newThumbnailUrl = await regenerateThumbnail(url, bookmarkType);
+      if (newThumbnailUrl) {
+        setThumbnailUrl(newThumbnailUrl);
+        setHasManuallySetThumbnail(false);
+        
+        toast({
+          title: "Success",
+          description: "Thumbnail regenerated successfully",
+        });
+      } else {
+        toast({
+          title: "Warning",
+          description: "Could not regenerate thumbnail",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error regenerating thumbnail:", error);
+      
+      toast({
+        title: "Error",
+        description: "Failed to regenerate thumbnail",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingThumbnail(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,9 +167,9 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         url,
         title: title || url,
         description: description || undefined,
-        type: getBookmarkTypeFromUrl(url),
+        type: bookmarkType,
         thumbnailUrl: thumbnailUrl || undefined,
-        videoThumbnailTimestamp: isVideoUrl(url) ? 60 : undefined,
+        videoThumbnailTimestamp: isVideoUrl(url) ? 5 : undefined, // Set default timestamp to 5 seconds
         dateAdded: editBookmark?.dateAdded || new Date(),
         lastVisited: editBookmark?.lastVisited,
         lastChecked: editBookmark?.lastChecked,
@@ -135,14 +177,34 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
         contentChanged: editBookmark?.contentChanged,
         tags: selectedTags,
         category: selectedCategory ? availableCategories.find(c => c.id === selectedCategory) : undefined,
+        favicon: getWebsiteFavicon(url)
       };
       
       onAddBookmark(newBookmark);
       onClose();
     } catch (error) {
       console.error('Error adding bookmark:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save bookmark",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Helper function to get appropriate icon for the bookmark type
+  const getThumbnailIcon = () => {
+    switch (bookmarkType) {
+      case 'video':
+        return <Video className="h-5 w-5 text-primary" />;
+      case 'image':
+        return <Image className="h-5 w-5 text-primary" />;
+      case 'document':
+        return <FileText className="h-5 w-5 text-primary" />;
+      default:
+        return <Globe className="h-5 w-5 text-primary" />;
     }
   };
 
@@ -152,8 +214,9 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
       <div className="relative max-w-md w-full bg-card rounded-lg shadow-lg animate-scale-up">
         <div className="flex justify-between items-center p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-white">
-            {editBookmark ? 'Edit Bookmark' : 'Add New Bookmark'}
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            {getThumbnailIcon()}
+            <span>{editBookmark ? 'Edit Bookmark' : 'Add New Bookmark'}</span>
           </h2>
           <button
             className="p-1 rounded-full hover:bg-secondary transition-colors text-white"
@@ -213,9 +276,21 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
           </div>
           
           <div className="space-y-1">
-            <label htmlFor="thumbnailUrl" className="text-sm font-medium text-white">
-              Thumbnail URL
-            </label>
+            <div className="flex justify-between items-center">
+              <label htmlFor="thumbnailUrl" className="text-sm font-medium text-white">
+                Thumbnail URL
+              </label>
+              {url && isUrlValid && !isGeneratingThumbnail && (
+                <button
+                  type="button"
+                  onClick={handleRegenerateThumbnail}
+                  className="text-xs text-primary flex items-center gap-1 hover:text-primary/80 transition-colors"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Regenerate
+                </button>
+              )}
+            </div>
             <input
               id="thumbnailUrl"
               type="text"
@@ -224,10 +299,10 @@ const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
               className="w-full px-3 py-2 border border-border rounded-md text-white bg-secondary"
               placeholder="URL for the thumbnail image"
             />
-            {isGeneratingScreenshot && (
+            {isGeneratingThumbnail && (
               <div className="mt-2 flex items-center text-xs text-muted-foreground">
                 <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                Generating screenshot...
+                Generating thumbnail...
               </div>
             )}
             {thumbnailUrl && (
