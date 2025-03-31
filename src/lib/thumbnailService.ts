@@ -60,25 +60,12 @@ export const generateVideoThumbnail = async (url: string): Promise<string | null
     return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
   }
 
-  // Check for Vimeo videos
-  const vimeoId = getVimeoVideoId(url);
-  if (vimeoId) {
-    try {
-      // Get Vimeo thumbnail via API
-      const vimeoData = await fetch(`https://vimeo.com/api/v2/video/${vimeoId}.json`);
-      const vimeoJson = await vimeoData.json();
-      return vimeoJson[0]?.thumbnail_large || null;
-    } catch (error) {
-      console.error('Error fetching Vimeo thumbnail:', error);
-    }
-  }
-
   // Check if it's a GIF
   if (isGifUrl(url)) {
     return url;
   }
 
-  // Direct video URL - use screenshot service
+  // For other video URLs, use the website thumbnail
   return generateWebsiteThumbnail(url);
 };
 
@@ -92,7 +79,7 @@ export const generateDocumentThumbnail = async (url: string): Promise<string | n
 
 /**
  * Generate a thumbnail for a website URL
- * Uses multiple services for fallback
+ * Uses a CORS-friendly approach
  */
 export const generateWebsiteThumbnail = async (url: string): Promise<string | null> => {
   // Check if we have a stored thumbnail
@@ -101,29 +88,9 @@ export const generateWebsiteThumbnail = async (url: string): Promise<string | nu
     return storedThumbnail;
   }
 
-  // Generate using screenshot service
+  // Simple option that avoids CORS issues - use a service that supports CORS
   const encodedUrl = encodeURIComponent(url);
-  
-  // Try multiple services for redundancy
-  const screenshotServices = [
-    // Screenshotone (primary)
-    `https://api.screenshotone.com/take?access_key=free&url=${encodedUrl}&device_scale_factor=1&format=jpg&image_quality=85&viewport_width=1280&viewport_height=800`,
-    
-    // Screenshotapi.net (fallback 1)
-    `https://screenshotapi.net/api/v1/screenshot?url=${encodedUrl}&width=1280&height=800&output=image&freshness=0`,
-    
-    // Urlbox (fallback 2)
-    `https://api.urlbox.io/v1/render?url=${encodedUrl}&width=1280&height=800&quality=85`
-  ];
-
-  // Return the first service URL - in a real implementation, you would
-  // try each service until one works, then store the result
-  const thumbnailUrl = screenshotServices[0];
-  
-  // Store the thumbnail for future use
-  await storeThumbnail(url, thumbnailUrl);
-  
-  return thumbnailUrl;
+  return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodedUrl}&size=128`;
 };
 
 /**
