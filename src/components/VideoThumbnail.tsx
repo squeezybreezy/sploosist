@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { getYouTubeVideoId, isGifUrl } from '@/lib/bookmarkUtils';
 import GifThumbnail from './thumbnails/GifThumbnail';
