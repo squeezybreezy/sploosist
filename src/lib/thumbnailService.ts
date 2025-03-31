@@ -5,6 +5,9 @@ import { getYouTubeVideoId, getVimeoVideoId, isGifUrl } from './bookmarkUtils';
 // Cache to avoid unnecessary API calls
 const thumbnailCache: Record<string, string> = {};
 
+// Your API token here
+const SCREENSHOT_API_TOKEN = "T9CY3J4-PZGMAGC-JAVFRRR-BA4PM3S";
+
 /**
  * Generate a thumbnail for a bookmark based on its URL and type
  * @param url The URL to generate a thumbnail for
@@ -26,7 +29,8 @@ export const generateThumbnail = async (url: string, type: BookmarkType): Promis
         thumbnailUrl = await generateVideoThumbnail(url);
         break;
       case 'image':
-        thumbnailUrl = url; // Use the image URL directly
+        // For images, use a reliable image proxy that handles CORS
+        thumbnailUrl = createProxiedImageUrl(url);
         break;
       case 'document':
         thumbnailUrl = await generateDocumentThumbnail(url);
@@ -50,11 +54,20 @@ export const generateThumbnail = async (url: string, type: BookmarkType): Promis
 };
 
 /**
+ * Create a proxied image URL to avoid CORS issues
+ */
+const createProxiedImageUrl = (url: string): string => {
+  const encodedUrl = encodeURIComponent(url);
+  // Images.weserv.nl is a very reliable image proxy service
+  return `https://images.weserv.nl/?url=${encodedUrl}&w=640&h=480&fit=cover&output=jpg`;
+};
+
+/**
  * Generate a thumbnail for a video URL
  * Supports YouTube, Vimeo, and direct video links
  */
 export const generateVideoThumbnail = async (url: string): Promise<string | null> => {
-  // Check for YouTube videos
+  // Check for YouTube videos (most reliable)
   const youtubeId = getYouTubeVideoId(url);
   if (youtubeId) {
     return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
@@ -62,10 +75,10 @@ export const generateVideoThumbnail = async (url: string): Promise<string | null
 
   // Check if it's a GIF
   if (isGifUrl(url)) {
-    return url;
+    return createProxiedImageUrl(url);
   }
 
-  // For other video URLs, use the website thumbnail
+  // For other video URLs, use website screenshot
   return generateWebsiteThumbnail(url);
 };
 
@@ -73,13 +86,13 @@ export const generateVideoThumbnail = async (url: string): Promise<string | null
  * Generate a thumbnail for a document URL
  */
 export const generateDocumentThumbnail = async (url: string): Promise<string | null> => {
-  // For documents, we use a generic thumbnail or screenshot the page
+  // For documents, use website screenshot
   return generateWebsiteThumbnail(url);
 };
 
 /**
  * Generate a thumbnail for a website URL
- * Uses a CORS-friendly approach
+ * Uses a reliable screenshot service that handles CORS
  */
 export const generateWebsiteThumbnail = async (url: string): Promise<string | null> => {
   // Check if we have a stored thumbnail
@@ -88,20 +101,17 @@ export const generateWebsiteThumbnail = async (url: string): Promise<string | nu
     return storedThumbnail;
   }
 
-  // Simple option that avoids CORS issues - use a service that supports CORS
+  // URL-encode the target URL
   const encodedUrl = encodeURIComponent(url);
-  return `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodedUrl}&size=128`;
+  
+  // Use a reliable screenshot service or API that supports CORS
+  return `https://shot.screenshotapi.net/screenshot?token=${SCREENSHOT_API_TOKEN}&url=${encodedUrl}&width=800&height=600&output=image&file_type=png&wait_for_event=load`;
 };
 
 /**
  * Get a stored thumbnail from Supabase storage
  */
 export const getThumbnailFromStorage = async (url: string): Promise<string | null> => {
-  // In a real implementation, you would:
-  // 1. Hash the URL to create a unique filename
-  // 2. Check if a file with that name exists in storage
-  // 3. Return the public URL if it exists
-  
   // Mock implementation
   return null;
 };
@@ -110,12 +120,6 @@ export const getThumbnailFromStorage = async (url: string): Promise<string | nul
  * Store a thumbnail in Supabase storage
  */
 export const storeThumbnail = async (url: string, thumbnailUrl: string): Promise<void> => {
-  // In a real implementation, you would:
-  // 1. Hash the URL to create a unique filename
-  // 2. Fetch the thumbnail image
-  // 3. Upload to Supabase storage
-  // 4. Return the public URL
-  
   // Mock implementation
   return;
 };
@@ -124,7 +128,6 @@ export const storeThumbnail = async (url: string, thumbnailUrl: string): Promise
  * Delete a thumbnail from storage
  */
 export const deleteThumbnail = async (url: string): Promise<void> => {
-  // Remove from storage if it exists
   // Mock implementation
   return;
 };
